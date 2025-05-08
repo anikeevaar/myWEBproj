@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto text-center">
+            <h2>Добро пожаловать в ваш дневник настроений!</h2>
+            <p class="lead">Мы рады видеть вас снова. Как ваше настроение сегодня?</p>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Быстрый старт</h4>
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('calendar') }}" class="btn btn-primary w-100">
+                                <i class="bi bi-calendar"></i> Открыть календарь
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('diary') }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-journal"></i> Мой дневник
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Сегодняшняя рекомендация</h4>
+                    <p>Попробуйте записать три вещи, за которые вы благодарны сегодня.</p>
+                    <a href="{{ url_for('calendar') }}" class="btn btn-success">
+                        Сделать запись
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

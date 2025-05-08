@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="my-4">Статистика настроений</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5>Распределение настроений</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="moodChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5>Последние записи</h5>
+            </div>
+            <div class="card-body">
+                {% if last_entries %}
+                <div class="list-group">
+                    {% for entry in last_entries %}
+                    <a href="{{ url_for('calendar', date=entry.date.strftime('%Y-%m-%d')) }}"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ entry.date.strftime('%d.%m.%Y') }}</h6>
+                            <small class="text-muted">
+                                {% if entry.mood == 'happy' %}😊
+                                {% elif entry.mood == 'neutral' %}😐
+                                {% elif entry.mood == 'sad' %}😞
+                                {% elif entry.mood == 'angry' %}😠
+                                {% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1 text-truncate">{{ entry.note or 'Без записи' }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Нет записей для отображения</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ctx = document.getElementById('moodChart').getContext('2d');
+    const moodChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Радостное', 'Нейтральное', 'Грустное', 'Злое'],
+            datasets: [{
+                data: [
+                    {{ mood_data.happy }},
+                    {{ mood_data.neutral }},
+                    {{ mood_data.sad }},
+                    {{ mood_data.angry }}
+                ],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(255, 99, 132, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw + ' записей';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

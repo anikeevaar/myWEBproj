@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Мой дневник</h1>
+
+    {% if entries %}
+    <div class="list-group">
+        {% for entry in entries %}
+        <a href="{{ url_for('calendar', date=entry.date.strftime('%Y-%m-%d')) }}"
+           class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-1">{{ entry.date.strftime('%d.%m.%Y') }}</h5>
+                <span class="badge bg-primary rounded-pill mood-badge">
+                    {% if entry.mood == 'happy' %}😊 Радостное
+                    {% elif entry.mood == 'neutral' %}😐 Нейтральное
+                    {% elif entry.mood == 'sad' %}😞 Грустное
+                    {% elif entry.mood == 'angry' %}😠 Злое
+                    {% endif %}
+                </span>
+            </div>
+            <p class="mb-1 mt-2">{{ entry.note|truncate(100) or "Без заметки" }}</p>
+            <small class="text-muted">Ответ: {{ entry.answer|truncate(50) or "Нет ответа" }}</small>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        У вас пока нет записей в дневнике.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь настроений{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row">
+        <!-- Левая колонка - календарь -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{{ url_for('calendar', year=prev_year, month=prev_month) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-chevron-left"></i> {{ MONTH_NAMES[prev_month] }}
+                </a>
+                <h2 class="text-center mb-0">{{ current_month }} {{ current_year }}</h2>
+                <a href="{{ url_for('calendar', year=next_year, month=next_month) }}" class="btn btn-outline-primary">
+                    {{ MONTH_NAMES[next_month] }} <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr class="table-light">
+                            <th class="text-center">Пн</th>
+                            <th class="text-center">Вт</th>
+                            <th class="text-center">Ср</th>
+                            <th class="text-center">Чт</th>
+                            <th class="text-center">Пт</th>
+                            <th class="text-center">Сб</th>
+                            <th class="text-center">Вс</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for week in calendar_matrix %}
+                        <tr>
+                            {% for day in week %}
+                            <td class="calendar-day {% if not day %}bg-light{% endif %}
+                                                  {% if day and day == today %}today{% endif %}
+                                                  {% if day and day == selected_date %}selected{% endif %}"
+                                {% if day and day <= today %}onclick="location.href='{{ url_for('calendar', date=day.strftime('%Y-%m-%d')) }}'"{% endif %}>
+                                {% if day %}
+                                    <div>{{ day.day }}</div>
+                                    {% if day <= today %}
+                                        {% set day_entry = DayEntry.query.filter_by(date=day, user_id=session['user_id']).first() %}
+                                        {% if day_entry %}
+                                            <div class="mt-1">
+                                                {% if day_entry.mood == 'happy' %}😊
+                                                {% elif day_entry.mood == 'neutral' %}😐
+                                                {% elif day_entry.mood == 'sad' %}😞
+                                                {% elif day_entry.mood == 'angry' %}😠
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Правая колонка - форма настроения и заметок -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ selected_date.strftime('%d %B %Y') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if selected_date > today %}
+                        <div class="alert alert-info">
+                            Выберите прошедшую или текущую дату для просмотра или редактирования записей.
+                        </div>
+                    {% else %}
+                        <form method="POST">
+                            <input type="hidden" name="selected_date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
+
+                            <div class="mb-4">
+                                <h6>Моё настроение:</h6>
+                                <div class="d-flex justify-content-between flex-wrap">
+                                    {% for mood in ['happy', 'neutral', 'sad', 'angry'] %}
+                                    <div class="mood-option text-center mb-2" style="flex: 0 0 48%;">
+                                        <input type="radio" id="mood-{{ mood }}" name="mood" value="{{ mood }}"
+                                               {% if entry and entry.mood == mood %}checked{% endif %}
+                                               {% if not edit_mode and entry %}disabled{% endif %}>
+                                        <label for="mood-{{ mood }}" class="d-flex flex-column align-items-center">
+                                            <span class="mood-icon">
+                                                {% if mood == 'happy' %}😊
+                                                {% elif mood == 'neutral' %}😐
+                                                {% elif mood == 'sad' %}😞
+                                                {% elif mood == 'angry' %}😠
+                                                {% endif %}
+                                            </span>
+                                            <small>
+                                                {% if mood == 'happy' %}Радостное
+                                                {% elif mood == 'neutral' %}Нейтральное
+                                                {% elif mood == 'sad' %}Грустное
+                                                {% elif mood == 'angry' %}Злое
+                                                {% endif %}
+                                            </small>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Вопрос дня:</label>
+                                <p class="fw-bold">{{ daily_question }}</p>
+                                <textarea class="form-control" id="answer" name="answer" rows="3"
+                                          {% if not edit_mode and entry %}disabled{% endif %}>{{ entry.answer if entry else '' }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="note" class="form-label">Мои заметки:</label>
+                                <textarea class="form-control" id="note" name="note" rows="5"
+                                          {% if not edit_mode and entry %}disabled{% endif %}>{{ entry.note if entry else '' }}</textarea>
+                            </div>
+
+                            {% if entry and not edit_mode %}
+                            <button type="submit" name="edit" class="btn btn-primary w-100">
+                                <i class="bi bi-pencil"></i> Редактировать запись
+                            </button>
+                            {% else %}
+                            <button type="submit" name="save" class="btn btn-success w-100">
+                                <i class="bi bi-save"></i> Сохранить запись
+                            </button>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

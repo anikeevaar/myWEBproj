@@ -13,7 +13,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
-#app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 #app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
 
 
@@ -30,7 +29,7 @@ def logout():
 
 
 def main():
-    db_session.global_init("db/subscribes1.db")
+    db_session.global_init("db/subscribes.db")
     app.run()
 
 

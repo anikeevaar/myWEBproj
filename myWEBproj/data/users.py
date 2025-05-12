@@ -20,6 +20,7 @@ class User(SqlAlchemyBase, UserMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
+    tg_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     subscribes = orm.relationship("Subscribes", back_populates='user')
 
     def set_password(self, password):

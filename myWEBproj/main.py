@@ -1,15 +1,16 @@
-import datetime
-
-from flask import Flask, render_template, redirect, request, abort
+from flask import Flask, render_template, redirect, request, abort, flash
 from data import db_session
 from data.subscribes import Subscribes
 from data.users import User
 from forms.add_sub import SubscribesForm
 from forms.login import LoginForm
 from forms.register import RegisterForm
+from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 
 app = Flask(__name__)
+scheduler = BackgroundScheduler()
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -144,6 +145,56 @@ def news_delete(id):
     else:
         abort(404)
     return redirect('/')
+
+
+def check_payment_dates():
+    with app.app_context():
+        db_sess = db_session.create_session()
+        today = datetime.now().day
+
+        # Находим подписки, у которых сегодня payment_date и is_paid=True
+        subscriptions = db_sess.query(Subscribes).filter(
+            Subscribes.payment_date == today,
+            Subscribes.is_paid == True
+        ).all()
+
+        for sub in subscriptions:
+            sub.is_paid = False
+            db_sess.commit()
+            print(f"Сброшен статус оплаты для подписки {sub.id}")
+
+
+# Запускаем проверку каждый день в 00:01
+scheduler.add_job(
+    check_payment_dates,
+    'cron',
+    hour=0,
+    minute=1,
+    id='daily_payment_check'
+)
+scheduler.start()
+
+
+@app.route('/mark_paid/<int:subscribe_id>', methods=['POST'])
+def mark_paid(subscribe_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+
+    db_sess = db_session.create_session()
+    subscription = db_sess.query(Subscribes).filter(
+        Subscribes.id == subscribe_id,
+        Subscribes.user == current_user
+    ).first()
+
+    if not subscription:
+        abort(404)
+
+    subscription.is_paid = True
+    db_sess.commit()
+
+    flash('Подписка отмечена как оплаченная!', 'success')
+    return redirect('/')
+
 
 if __name__ == '__main__':
     main()

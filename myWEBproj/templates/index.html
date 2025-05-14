@@ -1,35 +1,49 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Подписки</h1>
-<p></p>
-{% if current_user.is_authenticated %}
-    <a href="subscribes" class="btn btn-secondary">Добавить подписку</a>
-{% endif %}
-<p></p>
-{% for item in subscribes%}
-<p></p>
-<div class="row">
-  <div class="col-sm-6 mb-3 mb-sm-0">
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">Сервис: {{item.name_serv}}</h5>
-        <p class="card-text">Цена: {{item.price}} рубля</p>
-          <p class="card-text">Дата платежа: {{item.payment_date}} числа каждого месяца</p>
-        <a href={{item.link}} class="btn btn-primary">Перейти на сайт для оплаты</a>
-      </div>
+<div class="container">
+    <h1>Подписки</h1>
+    <p></p>
+    {% if current_user.is_authenticated %}
+        <a href="subscribes" class="btn btn-secondary text-dark" style="background-color: #d6ab81;"><i class="bi bi-plus-lg me-2"></i> Добавить подписку</a>
+    {% endif %}
+    <p></p>
+    
+    <div class="row">
+        {% for item in subscribes %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="background-color: #faeedd;">
+                <h5 class="card-header" style="background-color: #edc182;">Сервис: {{item.name_serv}}</h5>
+                <div class="card-body d-flex flex-column">
+                    <p class="card-title"><i class="bi bi-credit-card-fill"></i> Цена: {{item.price}} рубля</p>
+                    <p class="card-text"><i class="bi bi-calendar-event"></i> Дата платежа: {{item.payment_date}} числа каждого месяца</p>
+                    <div class="d-flex justify-content-between mb-3">
+                        <a href="{{item.link}}" class="btn btn-primary text-dark" style="background-color: #d2b48c;"><i class="bi bi-box-arrow-up-right me-2"></i> Перейти на сайт</a>
+                        <form action="/mark_paid/{{ item.id }}" method="post">
+                            <button type="submit" class="btn" style="background-color: {% if item.is_paid %}#bdda57{% else %}#ff9966{% endif %};">
+                                {% if item.is_paid %}<i class="bi bi-check-circle-fill me-2"></i> Оплачено{% else %}<i class="bi bi-x-circle-fill"></i> Требуется оплата{% endif %}
+                            </button>
+                        </form>
+                    </div>
+
+                    {% if current_user.is_authenticated and current_user == item.user %}
+                    <div class="d-flex justify-content-between mt-auto">
+                        <a href="/subscribes/{{ item.id }}" class="btn btn-primary text-dark" style="background-color: #ffbf52">
+                            <i class="bi bi-pencil-square me-2"></i>Изменить
+                        </a>
+                        <a href="/subscribes_delete/{{ item.id }}" class="btn btn-primary text-dark" style="background-color: #ffa474">
+                            <i class="bi bi-trash me-2"></i>Удалить
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if loop.index % 2 == 0 %}
+            <div class="w-100"></div>
+        {% endif %}
+        {% endfor %}
     </div>
-  </div>
 </div>
-{% if current_user.is_authenticated and current_user == item.user %}
-    <div>
-        <a href="/subscribes/{{ item.id }}" class="btn btn-warning">
-            Изменить
-        </a>
-        <a href="/subscribes_delete/{{ item.id }}" class="btn btn-danger">
-            Удалить
-        </a>
-    </div>
-{% endif %}
-{% endfor %}
 {% endblock %}

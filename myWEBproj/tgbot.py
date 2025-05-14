@@ -94,11 +94,6 @@ async def process_email(message: types.Message, state: FSMContext):
         await message.answer("Пользователь с таким email не найден. Попробуйте еще раз.")
         return
 
-    if user[3]:  # Если tg_id уже есть
-        await message.answer("Этот email уже привязан к другому Telegram аккаунту.")
-        await state.clear()
-        return
-
     await state.update_data(email=email, user_id=user[0])
     await message.answer("Введите ваш пароль:")
     await state.set_state(AuthStates.password)
@@ -118,7 +113,7 @@ async def process_password(message: types.Message, state: FSMContext):
         await message.answer(
             f"✅ Авторизация успешна!\n"
             f"Теперь вы будете получать уведомления о ваших подписках.\n"
-            f"Уведомления приходят за день до даты оплаты в 19:30."
+            f"Уведомления приходят за день до даты оплаты в 17:00."
         )
     else:
         await message.answer("⚠ Произошла ошибка при сохранении данных. Попробуйте позже.")
@@ -177,7 +172,7 @@ async def main():
     scheduler.add_job(
         send_daily_notifications,
         'cron',
-        hour=20,
+        hour=17,
         minute=00,
         args=[bot]
     )

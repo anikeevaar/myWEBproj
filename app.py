@@ -39,6 +39,15 @@ class DailyQuestion(db.Model):
     question = db.Column(db.String(255), nullable=False)
 
 
+class Subscription(db.Model):
+    __bind_key__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    auto_renew = db.Column(db.Boolean, default=True)
+
+
 DAILY_QUESTIONS = [
     "Что хорошего сегодня произошло?",
     "Что нового вы узнали сегодня?",
@@ -326,33 +335,123 @@ def export_csv():
         return redirect(url_for('login_page'))
 
     user_id = session['user_id']
-    entries = DayEntry.query.filter_by(user_id=user_id).order_by(DayEntry.date).all()
 
-    data = {
-        'Дата': [entry.date.strftime('%d.%m.%Y') for entry in entries],
-        'Настроение': [get_mood_name(entry.mood) for entry in entries],
-        'Запись': [entry.note for entry in entries],
-        'Ответ на вопрос': [entry.answer for entry in entries]
-    }
+    # Проверяем активную подписку
+    subscription = Subscription.query.filter_by(user_id=user_id).first()
+    if not subscription or subscription.end_date < date.today():
+        flash('Для экспорта данных требуется активная подписка', 'danger')
+        return redirect(url_for('subscription'))
 
-    df = pd.DataFrame(data)
-    output = io.StringIO()
-    df.to_csv(output, index=False, encoding='utf-8-sig', sep=';')
-    output.seek(0)
+    try:
+        # Получаем все записи пользователя
+        entries = DayEntry.query.filter_by(user_id=user_id).order_by(DayEntry.date).all()
 
-    return send_file(
-        io.BytesIO(output.getvalue().encode('utf-8-sig')),
-        mimetype='text/csv',
-        as_attachment=True,
-        download_name='дневник_настроения.csv'
-    )
+        if not entries:
+            flash('Нет данных для экспорта', 'warning')
+            return redirect(url_for('diary'))
+
+        # Подготавливаем данные для CSV
+        data = {
+            'Дата': [entry.date.strftime('%d.%m.%Y') for entry in entries],
+            'Настроение': [get_mood_name(entry.mood) for entry in entries],
+            'Запись': [entry.note if entry.note else '' for entry in entries],
+            'Ответ на вопрос': [entry.answer if entry.answer else '' for entry in entries]
+        }
+
+        # Создаем DataFrame
+        df = pd.DataFrame(data)
+
+        # Создаем CSV в памяти
+        output = io.StringIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig', sep=';')
+        output.seek(0)
+
+        # Создаем имя файла с текущей датой
+        today_str = date.today().strftime('%Y-%m-%d')
+        filename = f'дневник_настроения_{today_str}.csv'
+
+        # Отправляем файл пользователю
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        app.logger.error(f'Ошибка при экспорте CSV: {str(e)}')
+        flash('Произошла ошибка при создании файла экспорта', 'danger')
+        return redirect(url_for('diary'))
 
 
 @app.route('/subscription')
 def subscription():
     if 'user_id' not in session:
         return redirect(url_for('login_page'))
-    return render_template('subscription.html')
+
+    user_id = session['user_id']
+    current_subscription = Subscription.query.filter_by(user_id=user_id).first()
+
+    return render_template('subscription.html',
+                           current_subscription=current_subscription)
+
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    user_id = session['user_id']
+    today = date.today()
+    end_date = today + timedelta(days=30)  # 30 дней подписки
+
+    subscription = Subscription.query.filter_by(user_id=user_id).first()
+
+    if subscription:
+        subscription.start_date = today
+        subscription.end_date = end_date
+        subscription.auto_renew = True
+    else:
+        subscription = Subscription(
+            user_id=user_id,
+            start_date=today,
+            end_date=end_date,
+            auto_renew=True
+        )
+        db.session.add(subscription)
+
+    db.session.commit()
+    return redirect(url_for('subscription'))
+
+
+@app.route('/cancel_subscription', methods=['POST'])
+def cancel_subscription():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    user_id = session['user_id']
+    subscription = Subscription.query.filter_by(user_id=user_id).first()
+
+    if subscription:
+        subscription.auto_renew = False
+        db.session.commit()
+
+    return redirect(url_for('subscription'))
+
+
+@app.route('/enable_auto_renew', methods=['POST'])
+def enable_auto_renew():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    user_id = session['user_id']
+    subscription = Subscription.query.filter_by(user_id=user_id).first()
+
+    if subscription:
+        subscription.auto_renew = True
+        db.session.commit()
+
+    return redirect(url_for('subscription'))
 
 
 @app.route('/menu')

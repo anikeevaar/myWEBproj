@@ -2,93 +2,47 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Настройки подписки</h1>
+    <h1 class="mb-4">Подписка</h1>
 
-    <div class="row">
+    {% if current_subscription %}
+    <div class="alert alert-info mb-4">
+        <h4>Ваша подписка активна</h4>
+        <p>Действует до: {{ current_subscription.end_date.strftime('%d.%m.%Y') }}</p>
+        <p>Автопродление: {{ 'Включено' if current_subscription.auto_renew else 'Отключено' }}</p>
+        {% if current_subscription.auto_renew %}
+        <form method="POST" action="{{ url_for('cancel_subscription') }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Отключить автопродление</button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('subscribe') }}">
+            <button type="submit" class="btn btn-sm btn-outline-success">Включить автопродление</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
+            <div class="card h-100 {% if current_subscription %}border-success{% endif %}">
+                <div class="card-header {% if current_subscription %}bg-success{% else %}bg-primary{% endif %} text-white">
+                    <h4 class="my-0 fw-normal">Премиум подписка</h4>
+                </div>
                 <div class="card-body text-center">
-                    <h3 class="card-title">Стандарт</h3>
-                    <h4 class="text-primary">199 ₽/мес</h4>
+                    <h3 class="card-title">Все возможности</h3>
+                    <h4 class="text-primary">299 ₽/мес</h4>
                     <ul class="list-unstyled text-start mt-3 mb-4">
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i> Экспорт в CSV</li>
-                        <li><i class="bi bi-x-circle-fill text-secondary me-2"></i> Расширенная статистика</li>
-                        <li><i class="bi bi-x-circle-fill text-secondary me-2"></i> Психолог онлайн</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Расширенная статистика</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Доступ ко всем функциям</li>
                     </ul>
-                    <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#standardModal">
-                        Подробнее
-                    </button>
+                    {% if not current_subscription %}
+                    <form method="POST" action="{{ url_for('subscribe') }}">
+                        <button type="submit" class="btn btn-primary w-100">Оформить подписку</button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-success w-100" disabled>Подписка активна</button>
+                    {% endif %}
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="my-0 fw-normal">Популярный</h4>
-                </div>
-                <div class="card-body text-center">
-                    <h3 class="card-title">Стандарт+</h3>
-                    <h4 class="text-primary">599 ₽/мес</h4>
-                    <ul class="list-unstyled text-start mt-3 mb-4">
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Все возможности Стандарт</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Психолог онлайн</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Расширенная статистика </li>
-                    </ul>
-                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#premiumModal">
-                        Подробнее
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно для Стандарт -->
-<div class="modal fade" id="standardModal" tabindex="-1" aria-labelledby="standardModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="standardModalLabel">Подписка Стандарт</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h4 class="text-center mb-4">199 ₽ в месяц</h4>
-                <ul class="list-group list-group-flush mb-4">
-                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Основные функции дневника</li>
-                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Доступ к статистике</li>
-                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Экспорт данных в CSV</li>
-                    <li class="list-group-item text-muted"><i class="bi bi-x-circle-fill me-2"></i> Премиум-функции</li>
-                </ul>
-                <p class="text-muted small">Автоматическое продление. Можно отменить в любой момент.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-success">Оплатить подписку</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно для Стандарт+ -->
-<div class="modal fade" id="premiumModal" tabindex="-1" aria-labelledby="premiumModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="premiumModalLabel">Подписка Стандарт+</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h4 class="text-center mb-4">499 ₽ в месяц</h4>
-                <ul class="list-group list-group-flush mb-4">
-                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Все функции Стандарт</li>
-                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Психолог онлайн</li>
-                </ul>
-                <p class="text-muted small">Автоматическое продление. Можно отменить в любой момент.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-success">Оплатить подписку</button>
             </div>
         </div>
     </div>

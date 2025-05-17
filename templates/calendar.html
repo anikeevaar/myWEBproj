@@ -41,8 +41,8 @@
                                 {% if day %}
                                     <div>{{ day.day }}</div>
                                     {% if day <= today %}
-                                        {% set day_entry = DayEntry.query.filter_by(date=day, user_id=session['user_id']).first() %}
-                                        {% if day_entry %}
+                                        {% set day_entry = entries_dict.get(day) %}
+                                        {% if day_entry and day_entry.mood %}
                                             <div class="mt-1">
                                                 {% if day_entry.mood == 'happy' %}😊
                                                 {% elif day_entry.mood == 'neutral' %}😐
@@ -136,3 +136,4 @@
     </div>
 </div>
 {% endblock %}
+

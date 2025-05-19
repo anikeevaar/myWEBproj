@@ -11,7 +11,7 @@ from aiogram.fsm.state import StatesGroup, State
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from werkzeug.security import check_password_hash
 
-from config import BOT_TOKEN
+BOT_TOKEN = "7431447438:AAF2tyceUxIBqQq7kYOXNaj8sxFG8_q7yYw"
 
 # Настройка логирования
 logging.basicConfig(

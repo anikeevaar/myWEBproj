@@ -8,8 +8,9 @@ from forms.register import RegisterForm
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
-from parser import auth
 from myWEBproj.forms.add_sud import SubscridesForm
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
@@ -17,6 +18,26 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 #app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
+
+
+def auth(username, password):
+    data = {
+        "username": username,
+        "password": password
+    }
+    url_auth = 'https://elfin-circular-octagon.glitch.me/login'
+    url_subscribe = 'https://elfin-circular-octagon.glitch.me/subscription'
+    session = requests.Session()
+    session.post(url_auth, data=data)
+    response = session.get(url_subscribe).text
+    soup = BeautifulSoup(response, 'lxml')
+    block_main = soup.find('div', class_='container content')
+    block_data_1 = block_main.find('div', class_='alert alert-info mb-4')
+    block_data_2 = block_data_1.find_all('p')
+    block_costs_1 = block_main.find('div', class_='row justify-content-center')
+    block_costs_2 = block_costs_1.find('div', class_='card-body text-center')
+    block_costs_3 = block_costs_2.find('h4', class_='text-primary')
+    return [int(str(block_data_2[0]).split()[-1].split(".")[0]), int(str(block_costs_3)[25: -11])]
 
 
 @login_manager.user_loader

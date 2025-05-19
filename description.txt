@@ -3,4 +3,4 @@
 Harmony Dairy - трекер настроения и эмоций, позволяет вести запись своего настроения и поддерживать психическое здоровье.
 PayMind - система контроля финансов, а точнее оповещения о списаниях и подписках, в автономном режиме.
 (У каждого из сервисов есть телеграм бот)
-Основные технологии: Python, Flask, Flask-SQLAlchemy, Pandas, requests, bootstrap
+Основные технологии: Python, Flask, Flask-SQLAlchemy, Pandas, requests, bootstrap, aiogram, telebot.

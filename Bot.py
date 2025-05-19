@@ -6,8 +6,6 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-
-TOKEN = "7994081893:AAEsX9QN3095Qu0RYszBuCCZpINdF2p95-o"
 ADMIN_ID = 1322101244
 
 

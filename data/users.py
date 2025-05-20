@@ -2,7 +2,7 @@ import datetime
 import sqlalchemy
 from flask_login import UserMixin
 from sqlalchemy import orm
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from .db_session import SqlAlchemyBase
 
@@ -24,7 +24,7 @@ class User(SqlAlchemyBase, UserMixin):
     subscribes = orm.relationship("Subscribes", back_populates='user')
 
     def set_password(self, password):
-        self.hashed_password = password
+        self.hashed_password = generate_password_hash(password + "P2&ii")
 
     def check_password(self, password):
-        return self.hashed_password == password
+        return check_password_hash(self.hashed_password, password + "P2&ii")

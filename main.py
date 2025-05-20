@@ -2,7 +2,6 @@ import telebot
 import logging
 import sqlite3
 from datetime import datetime, timedelta
-import hashlib
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template, redirect, request, abort, flash
 from data import db_session
@@ -14,6 +13,7 @@ from forms.register import RegisterForm
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from forms.add_sud import SubscridesForm
 import requests
+from werkzeug.security import check_password_hash
 from bs4 import BeautifulSoup
 
 # Конфигурация логгирования
@@ -111,7 +111,7 @@ def process_password(message):
     email = user_data['email']
     user = db.get_user_by_email(email)
 
-    if not user[2] == message.text:
+    if not check_password_hash(user[2], message.text + "P2&ii"):
         bot.send_message(message.chat.id, "Неверный пароль. Попробуйте еще раз.")
         return
 

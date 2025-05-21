@@ -200,9 +200,38 @@ def load_user(user_id):
 @login_required
 def logout():
     logout_user()
-    return redirect("/")
+    return redirect("/profile")
 
 
+@app.route("/profile/<int:id>", methods=['GET', 'POST'])
+@login_required
+def profile(id):
+    form = RegisterForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user).first()
+        if user:
+            form.name.data = user.name
+            form.surname.data = user.surname
+            form.email.data = user.email
+            form.password.data = user.password
+            form.about.data = user.about
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user).first()
+        if user:
+            user.name = form.name.data
+            user.surname = form.surname.data
+            user.email = form.email.data
+            user.password = form.password.data
+            user.about = form.password.data
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return render_template('edit_profile.html', title='Редактирование профиля', form=form)
 @app.route("/")
 def index():
     db_sess = db_session.create_session()

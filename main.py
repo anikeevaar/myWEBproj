@@ -9,6 +9,7 @@ from data.subscribes import Subscribes
 from data.users import User
 from forms.add_sub import SubscribesForm
 from forms.login import LoginForm
+from forms.profile import EditForm
 from forms.register import RegisterForm
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from forms.add_sud import SubscridesForm
@@ -200,34 +201,37 @@ def load_user(user_id):
 @login_required
 def logout():
     logout_user()
-    return redirect("/profile")
+    return redirect("/")
 
 
-@app.route("/profile/<int:id>", methods=['GET', 'POST'])
+@app.route("/profile", methods=['GET', 'POST'])
 @login_required
-def profile(id):
-    form = RegisterForm()
+def profile():
+    form = EditForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == current_user).first()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
         if user:
             form.name.data = user.name
             form.surname.data = user.surname
             form.email.data = user.email
-            form.password.data = user.password
             form.about.data = user.about
+            # Пароль не заполняем для безопасности
         else:
             abort(404)
+
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == current_user).first()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
         if user:
             user.name = form.name.data
             user.surname = form.surname.data
             user.email = form.email.data
-            user.password = form.password.data
-            user.about = form.password.data
+            if form.password.data:  # Обновляем пароль только если он был изменен
+                user.set_password(form.password.data)
+            user.about = form.about.data
             db_sess.commit()
+            flash('Изменения сохранены', 'success')
             return redirect('/')
         else:
             abort(404)
